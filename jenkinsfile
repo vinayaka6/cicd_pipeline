@@ -1,0 +1,49 @@
+pipeline 
+{
+     agent any
+     tools
+     {
+        jdk 'jdk11'
+        maven 'maven3'
+     }
+     stages
+     {
+        stage('continuous download')
+        {
+            steps
+            {
+               git branch: 'main', changelog: false, poll: false, url: 'https://github.com/jaiswaladi246/Shopping-Cart.git' 
+            }
+        }
+        stage('continuous build')
+        {
+            steps
+            {
+               sh "mvn clean package -DskipTests=true" 
+            }
+        }
+        stage('continuous deploy')
+        {
+            steps
+            {
+               deploy adapters: [tomcat9(credentialsId: '1dfe9a2f-acb8-4597-bf6e-3b81cda6244c', path: '', url: 'http://172.31.41.98:8080')], contextPath: 'preprod', jar: '**/*.jar' 
+            }
+        }
+        stage('continuous testing')
+        {
+            steps
+            {
+               git 'https://github.com/keshavr21/test_cases.git'
+               sh 'java -jar testing.jar $WORKSPACE/target/shopping-cart-0.0.1-SNAPSHOT.jar' 
+            }
+        }
+        stage('continuous delivery')
+        {
+            steps
+            {
+               input message: 'WAITING FOR APPROVAL FROM DM', submitter: 'harish'
+               deploy adapters: [tomcat9(credentialsId: '1dfe9a2f-acb8-4597-bf6e-3b81cda6244c', path: '', url: 'http://172.31.41.98:8080')], contextPath: 'prod', jar: '**/*.jar' 
+            }
+        }
+     }
+}

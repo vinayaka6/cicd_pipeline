@@ -1,32 +1,39 @@
 pipeline 
 {
      agent any
-     tools
-     {
-        jdk 'jdk11'
-        maven 'maven3'
-     }
      stages
      {
         stage('continuous download')
         {
             steps
             {
-               git branch: 'main', changelog: false, poll: false, url: 'https://github.com/jaiswaladi246/Shopping-Cart.git' 
+                script
+                {
+                    try
+                    {
+                        git 'https://github.com/keshavr21/maven_test.git'
+                    }
+                    catch(Exception e1)
+                    {
+                        mail bcc: '', body: '', cc: 'githubmanager@xyz.com', from: '', replyTo: '', subject: 'BUILD PIPELINE IS FAILING', to: 'githubteam@xyz.com'
+                        exit (1)
+                    }
+                }
+               
             }
         }
         stage('continuous build')
         {
             steps
             {
-               sh "mvn clean package -DskipTests=true" 
+               sh '/opt/maven/bin/mvn clean package' 
             }
         }
         stage('continuous deploy')
         {
             steps
             {
-               deploy adapters: [tomcat9(credentialsId: '1dfe9a2f-acb8-4597-bf6e-3b81cda6244c', path: '', url: 'http://172.31.41.98:8080')], contextPath: 'preprod', jar: '**/*.jar' 
+               deploy adapters: [tomcat9(credentialsId: '1dfe9a2f-acb8-4597-bf6e-3b81cda6244c', path: '', url: 'http://172.31.41.98:8080')], contextPath: 'preprod', war: '**/*.war' 
             }
         }
         stage('continuous testing')
@@ -34,16 +41,32 @@ pipeline
             steps
             {
                git 'https://github.com/keshavr21/test_cases.git'
-               sh 'java -jar testing.jar $WORKSPACE/target/shopping-cart-0.0.1-SNAPSHOT.jar' 
+               sh 'java -jar testing.jar $WORKSPACE/webapp/target/webapp.war' 
             }
         }
-        stage('continuous delivery')
-        {
-            steps
-            {
-               input message: 'WAITING FOR APPROVAL FROM DM', submitter: 'harish'
-               deploy adapters: [tomcat9(credentialsId: '1dfe9a2f-acb8-4597-bf6e-3b81cda6244c', path: '', url: 'http://172.31.41.98:8080')], contextPath: 'prod', jar: '**/*.jar' 
-            }
-        }
+       
      }
+     post
+     {
+        success
+        {
+              input message: 'WAITING FOR APPROVAL FROM DM', submitter: 'harish'
+              deploy adapters: [tomcat9(credentialsId: '1dfe9a2f-acb8-4597-bf6e-3b81cda6244c', path: '', url: 'http://172.31.41.98:8080')], contextPath: 'prod', war: '**/*.war' 
+        }
+        failure
+        {
+            mail bcc: '', body: '', cc: 'manger@xyz.com', from: '', replyTo: '', subject: 'BUILD PIPELINE IS FAILING', to: 'devops_grp@xyz.com'
+        }
+        always
+        {
+            sh 'echo ALWAYS THIS WILL RUN'
+        }
+        aborted
+        {
+            sh 'echo THIS WILL EXECUTE DURING ABORT'
+        }
+         
+     }
+     
+         
 }

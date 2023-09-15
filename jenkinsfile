@@ -63,7 +63,7 @@ pipeline
         }
         aborted
         {
-            sh 'echo THIS WILL EXECUTE DURING ABORT'
+            sh 'echo THIS WILL EXECUTE DURINGABORT'
         }
          
      }

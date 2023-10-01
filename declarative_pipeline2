@@ -1,0 +1,79 @@
+pipeline
+{
+    agent any
+    stages
+    {
+        stage('continous download')
+        {
+            steps
+            {
+                script
+                {
+                    try
+                    {
+                         git 'https://github.com/keshavr21/maven_test.git'
+                    }
+                    catch(Exception E1)
+                    {
+                        mail bcc: '', body: 'declarative  job build is getting failed at deployment stage', cc: 'devops@gmail.com', from: '', replyTo: '', subject: 'Build failure', to: 'vinayakavinnu07@gmail.com'
+          
+                    }
+                }
+               
+            }
+        }
+        stage('continous build')
+        {
+            steps
+            {
+                sh '/opt/maven/bin/mvn clean package'
+            }
+        }
+        stage('continous deploy')
+        {
+            steps
+            {
+                deploy adapters: [tomcat9(credentialsId: '9f9fbda2-f942-4395-b63e-8f219c6b4520', path: '', url: 'http://13.232.66.227:8080/')], contextPath: 'testapp', war: '**/*.war'
+            }
+        }
+        stage('continous testing')
+        {
+            steps
+            {
+                git 'https://github.com/keshavr21/test_cases.git'
+            }
+        }
+        stage('continous delivery')
+        {
+            steps
+            {
+                deploy adapters: [tomcat9(credentialsId: '9f9fbda2-f942-4395-b63e-8f219c6b4520', path: '', url: 'http://13.232.66.227:8080/')], contextPath: 'testapp', war: '**/*.war'
+            }
+        }
+      
+    }
+    post 
+    {
+        success
+        {
+             input message: 'waiting for approval', submitter: 'ramki'
+        
+        }
+
+        failure
+        {
+            mail bcc: '', body: 'declarative  job build is getting failed at deployment stage', cc: 'devops@gmail.com', from: '', replyTo: '', subject: 'Build failure', to: 'vinayakavinnu07@gmail.com'        }
+          
+        always
+        {
+            sh 'echo This will always run'
+        }
+
+        aborted
+        {
+            sh 'echo  This will execute during abort'
+        }
+
+    }
+
+}

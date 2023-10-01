@@ -1,0 +1,30 @@
+pipeline
+{
+    agent any
+    parameters
+    {
+        string(name: 'SC_PAR', defaultValue: '', description: 'Paramter to the script')
+    }
+    stages
+        {
+            stage('download script')
+            {
+                steps
+                {
+                    git 'https://github.com/vinayaka6/vinayaka.git'
+                }
+            }
+            stage('execute script')
+            {
+                steps
+                {
+                    script
+                    {
+                        def Var= params.SC_PAR
+                        sh "chmod +x factorial.sh"
+                    }
+                }
+            }
+        }
+    
+}

@@ -1,0 +1,51 @@
+pipeline 
+{
+    agent any
+    tools
+    {
+        jdk 'jdk-11'
+        maven 'maven project'
+        
+    }
+
+    stages
+    {
+        stage('checkout') 
+        {
+            steps 
+            {
+                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/jaiswaladi246/Ekart.git'
+            }
+        }
+        stage('compile') 
+        {
+            steps 
+            {
+                sh 'mvn clean package -DskipTests=true'
+            }
+        }
+        stage('OWASPscan') 
+        {
+            steps 
+            {
+                dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'DP'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        stage('sonarscan') 
+        {
+            steps 
+            {
+                withSonarQubeEnv('sonar-server')
+                   sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Shopping-Cart \
+                   -Dsonar.java.binaries=. \
+                   -Dsonar.projectKey=Shopping-Cart '''
+            }
+            
+        }
+    }
+
+  }
+
+}
+
+

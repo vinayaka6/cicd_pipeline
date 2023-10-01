@@ -1,0 +1,26 @@
+node
+{
+    stage('continous download')
+    {
+        git 'https://github.com/keshavr21/maven_test.git'
+    }
+
+    stage('continous build') 
+    {
+        sh '/opt/maven/bin/mvn clean package'
+    }
+    stage('continous deploy')
+    {
+        deploy adapters: [tomcat9(credentialsId: '9f9fbda2-f942-4395-b63e-8f219c6b4520', path: '', url: 'http://13.232.66.227:8080/')], contextPath: 'testapp', war: '**/*.war'
+    }
+    stage('continous testing')
+    {
+        git 'https://github.com/keshavr21/test_cases.git'
+
+    }
+    stage('continous delivery')
+    {
+        deploy adapters: [tomcat9(credentialsId: '9f9fbda2-f942-4395-b63e-8f219c6b4520', path: '', url: 'http://13.232.66.227:8080/')], contextPath: 'testapp', war: '**/*.war'
+
+    }
+ }
